@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }}'s Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if profile_user.avatar %}
+                        <img src="{{ profile_user.avatar.url }}" alt="{{ profile_user.username }}" class="rounded-circle mb-3" width="150" height="150">
+                    {% else %}
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                            <span class="text-white fs-1">{{ profile_user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <h3>{{ profile_user.username }}</h3>
+                    {% if profile_user == user %}
+                        <a href="{% url 'users:profile_update' %}" class="btn btn-outline-primary btn-sm">Edit Profile</a>
+                        <!-- In templates/users/profile_detail.html or similar -->
+                        <a href="{% url 'users:password_change' %}" class="btn btn-outline-secondary">Change Password</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6>User Information</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Email:</strong> {{ profile_user.email }}</p>
+                    <p><strong>Name:</strong> {{ profile_user.first_name }} {{ profile_user.last_name }}</p>
+                    <p><strong>Joined:</strong> {{ profile_user.date_joined|date:"M d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Bio</h5>
+                </div>
+                <div class="card-body">
+                    {% if profile_user.bio %}
+                        <p>{{ profile_user.bio }}</p>
+                    {% else %}
+                        <p class="text-muted">No bio yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Activity Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Projects</h6>
+                            <p>Owned: {{ owned_projects.count }}</p>
+                            <p>Member of: {{ profile_user.projects.count }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Tasks</h6>
+                            <p>Assigned: {{ assigned_tasks.count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

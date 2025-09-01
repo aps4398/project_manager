@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Users</h1>
+    
+    <div class="row mt-4">
+        {% for user in users %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ user.username }}</h5>
+                    <p class="card-text">
+                        <strong>Email:</strong> {{ user.email }}<br>
+                        <strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}<br>
+                        <strong>Joined:</strong> {{ user.date_joined|date:"M d, Y" }}
+                    </p>
+                    <a href="{% url 'users:profile_detail' user.username %}" class="btn btn-outline-primary btn-sm">View Profile</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No users found.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

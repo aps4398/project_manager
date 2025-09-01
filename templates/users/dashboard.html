@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Dashboard</h1>
+    <p class="lead">Welcome back, {{ user.username }}!</p>
+
+    <div class="row mt-4">
+        <!-- Projects Summary -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Your Projects</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Owned Projects: {{ owned_projects.count }}</h6>
+                    <h6>Member Projects: {{ member_projects.count }}</h6>
+                    <h6>Total Projects: {{ total_projects }}</h6>
+                    
+                    <hr>
+                    <h6>Recent Owned Projects:</h6>
+                    {% for project in owned_projects|slice:":5" %}
+                    <div class="mb-2">
+                        <a href="{% url 'projects:project_detail' project.pk %}">{{ project.name }}</a>
+                        <small class="text-muted">({{ project.tasks.count }} tasks)</small>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No projects owned yet.</p>
+                    {% endfor %}
+                    
+                    <a href="{% url 'projects:project_create' %}" class="btn btn-primary btn-sm mt-2">Create New Project</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Summary -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Your Tasks</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Total Tasks: {{ total_tasks }}</h6>
+                    <h6>To Do: {{ todo_count }}</h6>
+                    <h6>In Progress: {{ in_progress_count }}</h6>
+                    
+                    <hr>
+                    <h6>Recent Tasks:</h6>
+                    {% for task in recent_tasks %}
+                    <div class="mb-2">
+                        <a href="{% url 'tasks:task_detail' task.pk %}">{{ task.title }}</a>
+                        <br>
+                        <small class="text-muted">
+                            Project: {{ task.project.name }} | 
+                            Status: <span class="badge bg-{% if task.status == 'todo' %}secondary{% elif task.status == 'in_progress' %}warning{% else %}success{% endif %}">
+                                {{ task.get_status_display }}
+                            </span>
+                        </small>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No tasks assigned yet.</p>
+                    {% endfor %}
+                    
+                    <a href="{% url 'projects:project_list' %}" class="btn btn-secondary btn-sm mt-2">View All Projects</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="{% url 'projects:project_create' %}" class="btn btn-primary me-md-2">
+                            Create Project
+                        </a>
+                        <a href="{% url 'projects:project_list' %}" class="btn btn-secondary me-md-2">
+                            View All Projects
+                        </a>
+                        <a href="{% url 'users:profile' %}" class="btn btn-outline-primary">
+                            Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

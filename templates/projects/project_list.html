@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Projects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Projects</h1>
+    <a href="{% url 'projects:project_create' %}" class="btn btn-primary">Create Project</a>
+</div>
+
+<div class="row">
+    {% for project in projects %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ project.name }}</h5>
+                <p class="card-text">{{ project.description|truncatewords:20 }}</p>
+                
+                <div class="mb-3">
+                    <!-- Remove or comment out the key display for now -->
+                    <!-- <span class="badge bg-secondary">Key: {{ project.key }}</span> -->
+                    <span class="badge bg-primary">Owner: {{ project.owner.username }}</span>
+                    <span class="badge bg-info">Members: {{ project.members.count }}</span>
+                    <span class="badge bg-success">Tasks: {{ project.tasks.count }}</span>
+                </div>
+                
+                <p class="text-muted">
+                    Created: {{ project.created_at|date:"M d, Y" }}
+                    {% if project.updated_at != project.created_at %}
+                    <br>Updated: {{ project.updated_at|date:"M d, Y" }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'projects:project_detail' project.pk %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                {% if project.owner == user %}
+                <a href="{% url 'projects:project_update' project.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                {% endif %}
+                <a href="{% url 'tasks:task_create' project.pk %}" class="btn btn-sm btn-outline-success">Add Task</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            You don't have any projects yet. <a href="{% url 'projects:project_create' %}">Create your first project</a>.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

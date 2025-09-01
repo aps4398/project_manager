@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ project.name }}</h1>
+    <div>
+        <a href="{% url 'tasks:task_create' project.pk %}" class="btn btn-primary">Add Task</a>
+        {% if project.owner == user %}
+            <a href="{% url 'projects:project_update' project.pk %}" class="btn btn-outline-secondary">Edit Project</a>
+        {% endif %}
+    </div>
+</div>
+
+<p>{{ project.description }}</p>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <h3>Tasks</h3>
+        {% for task in project.tasks.all %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ task.title }}</h5>
+                <p class="card-text">{{ task.description|truncatewords:20 }}</p>
+                <span class="badge bg-{% if task.status == 'todo' %}secondary{% elif task.status == 'in_progress' %}warning{% else %}success{% endif %}">
+                    {{ task.get_status_display }}
+                </span>
+                <span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}info{% endif %} ms-2">
+                    {{ task.get_priority_display }}
+                </span>
+                {% if task.assignee %}
+                <span class="ms-2">Assigned to: {{ task.assignee.username }}</span>
+                {% endif %}
+                {% if task.due_date %}
+                <span class="ms-2">Due: {{ task.due_date|date:"M d, Y" }}</span>
+                {% endif %}
+                <a href="{% url 'tasks:task_detail' task.pk %}" class="btn btn-sm btn-outline-primary float-end">View</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-info">
+            No tasks yet. <a href="{% url 'tasks:task_create' project.pk %}">Create the first task</a>.
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Project Details</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Owner:</strong> {{ project.owner.username }}</p>
+                <p><strong>Created:</strong> {{ project.created_at|date:"M d, Y" }}</p>
+                <p><strong>Members:</strong> {{ project.members.count }}</p>
+                <p><strong>Tasks:</strong> {{ project.tasks.count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

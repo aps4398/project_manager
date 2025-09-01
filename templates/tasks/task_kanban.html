@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Kanban Board - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Kanban Board - {{ project.name }}</h1>
+    <div>
+        <a href="{% url 'tasks:task_create' project.id %}" class="btn btn-primary">Create Task</a>
+        <a href="{% url 'tasks:task_list' %}" class="btn btn-secondary">List View</a>
+    </div>
+</div>
+
+<div class="kanban-board">
+    <div class="row">
+        {% for status, column in columns.items %}
+        <div class="col-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">{{ column.label }}</h6>
+                    <span class="badge bg-secondary">{{ column.tasks|length }}</span>
+                </div>
+                <div class="card-body kanban-column" data-status="{{ status }}">
+                    {% for task in column.tasks %}
+                    <div class="card mb-2 task-card" data-task-id="{{ task.id }}" draggable="true">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">
+                                <a href="{% url 'tasks:task_detail' task.pk %}">{{ task.key }}</a>
+                            </h6>
+                            <p class="card-text mb-1 small">{{ task.title|truncatewords:5 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{% if task.priority == 'highest' %}danger{% elif task.priority == 'high' %}warning{% elif task.priority == 'medium' %}primary{% elif task.priority == 'low' %}info{% else %}secondary{% endif %}">
+                                    {{ task.get_priority_display }}
+                                </span>
+                                {% if task.assignee %}
+                                <span class="avatar-sm">{{ task.assignee.username|first|upper }}</span>
+                                {% endif %}
+                            </div>
+                            {% if task.story_points %}
+                            <span class="badge bg-light text-dark">{{ task.story_points }} pts</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No tasks</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const taskCards = document.querySelectorAll('.task-card');
+    const columns = document.querySelectorAll('.kanban-column');
+    
+    // Add drag and drop functionality
+    taskCards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+    });
+    
+    columns.forEach(column => {
+        column.addEventListener('dragover', handleDragOver);
+        column.addEventListener('drop', handleDrop);
+    });
+    
+    function handleDragStart(e) {
+        e.dataTransfer.setData('text/plain', e.target.dataset.taskId);
+        e.target.classList.add('dragging');
+    }
+    
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+    }
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData('text/plain');
+        const newStatus = e.target.closest('.kanban-column').dataset.status;
+        
+        // Update task status via AJAX
+        fetch(`/tasks/${taskId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: `status=${newStatus}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Move task card to new column
+                const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+                e.target.closest('.kanban-column').appendChild(taskCard);
+                
+                // Show success message
+                showToast('Task status updated successfully', 'success');
+            } else {
+                showToast('Error updating task status', 'error');
+            }
+        });
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function showToast(message, type = 'info') {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        new bootstrap.Toast(toast).show();
+        
+        // Remove toast after animation
+        setTimeout(() => toast.remove(), 3000);
+    }
+});
+</script>
+
+<style>
+.kanban-column {
+    min-height: 500px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.task-card {
+    cursor: grab;
+}
+
+.task-card.dragging {
+    opacity: 0.5;
+}
+
+.avatar-sm {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+</style>
+{% endblock %}
